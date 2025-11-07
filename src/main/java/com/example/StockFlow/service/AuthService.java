@@ -76,7 +76,7 @@ public class AuthService {
     private boolean checkPassword(String rawPassword, String encodedPassword) {
         return encodePassword(rawPassword).equals(encodedPassword);
     }
-
+//logique du user courant
     // --- Récupérer l'utilisateur courant ---
     public AuthResponse getCurrentUser(String token) {
         User user = sessions.get(token);
