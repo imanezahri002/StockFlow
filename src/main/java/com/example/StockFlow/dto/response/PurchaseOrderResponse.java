@@ -13,5 +13,6 @@ public class PurchaseOrderResponse {
     private String managerName;
     private PurchaseOrderStatus status;
     private LocalDateTime createdAt;
+    private Long warehouseId;
     private List<PurchaseOrderLineResponse> orderLines;
 }

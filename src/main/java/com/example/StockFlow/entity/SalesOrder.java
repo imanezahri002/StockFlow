@@ -1,6 +1,5 @@
 package com.example.StockFlow.entity;
 
-
 import com.example.StockFlow.entity.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

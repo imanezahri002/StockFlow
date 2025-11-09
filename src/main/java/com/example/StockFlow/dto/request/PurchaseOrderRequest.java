@@ -5,6 +5,7 @@ import java.util.List;
 
 @Data
 public class PurchaseOrderRequest {
+    private Long warehouseId;
     private Long supplierId;
-    private List<PurchaseOrderLineRequest> orderLine;
+    private List<PurchaseOrderLineRequest> orderLines;
 }

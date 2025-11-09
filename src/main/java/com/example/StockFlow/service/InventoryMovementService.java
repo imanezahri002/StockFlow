@@ -4,12 +4,14 @@ import com.example.StockFlow.dto.request.InventoryMovementRequest;
 import com.example.StockFlow.dto.response.InventoryMovementResponse;
 import com.example.StockFlow.entity.Inventory;
 import com.example.StockFlow.entity.InventoryMovement;
+import com.example.StockFlow.entity.enums.MovementType;
 import com.example.StockFlow.mapper.InventoryMovementMapper;
 import com.example.StockFlow.repository.InventoryMovementRepository;
 import com.example.StockFlow.repository.InventoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,4 +51,24 @@ public class InventoryMovementService {
         }
         movementRepository.deleteById(id);
     }
+
+    public void createOutboundMovement(
+            Inventory inventory,
+            int quantity,
+            String ref,
+            String desc
+    ) {
+        InventoryMovement movement = InventoryMovement.builder()
+                .inventory(inventory)
+                .qty(quantity)
+                .type(MovementType.OUTBOUND)
+                .occurredAt(LocalDateTime.now())
+                .referenceDocument(ref)
+                .description(desc)
+                .build();
+
+        movementRepository.save(movement);
+    }
+
+
 }

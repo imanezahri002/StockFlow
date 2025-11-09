@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -27,5 +28,10 @@ public class PurchaseOrderLine {
 
     private Integer quantity;
     private BigDecimal unitPrice;
+
+    private BigDecimal totalPrice;
+
+    private LocalDateTime createdAt;
+
 }
 

@@ -26,6 +26,9 @@ public class SalesOrderLine {
 
     private Integer quantity;
     private BigDecimal unitPrice;
+    private BigDecimal totalPrice;
+
     private boolean backorder;
+
 }
 

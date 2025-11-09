@@ -18,6 +18,6 @@ public class ProductResponse {
     private String name;
     private String category;
     private Boolean active;
-    private Long originalPrice;
+    private BigDecimal originalPrice;
     private BigDecimal profit;
 }
