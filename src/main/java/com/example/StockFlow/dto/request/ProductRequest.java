@@ -26,7 +26,7 @@ public class ProductRequest {
     @NotNull(message = "Le statut actif est obligatoire")
     private Boolean active;
 
-    private Long originalPrice;
+    private BigDecimal originalPrice;
 
     private BigDecimal profit;
 }
