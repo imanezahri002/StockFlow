@@ -31,10 +31,8 @@ public interface InventoryMapper {
     // === Mise à jour partielle de l'entité depuis le DTO ===
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "warehouse", source = "warehouse")
-    @Mapping(target = "product", source = "product")
     @Mapping(target = "inventoryMovements", ignore = true)
-    @Mapping(target = "name", source = "request.name") // si on veut mettre à jour le nom
-    void updateEntityFromDto(InventoryRequest request, @MappingTarget Inventory inventory,
-                             Warehouse warehouse, Product product);
+    @Mapping(target = "warehouse", ignore = true) // relations gérées manuellement
+    @Mapping(target = "product", ignore = true)   // relations gérées manuellement
+    void updateEntityFromDto(InventoryRequest request, @MappingTarget Inventory inventory);
 }

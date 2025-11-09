@@ -53,13 +53,22 @@ public class InventoryService {
         Inventory inventory = inventoryRepository.findById(id)
                 .orElseThrow(() -> new CustomException("Inventory not found with ID: " + id));
 
-        Warehouse warehouse = warehouseRepository.findById(request.getWarehouseId())
-                .orElseThrow(() -> new CustomException("Warehouse not found with ID: " + request.getWarehouseId()));
+        // === Mise à jour des relations seulement si elles sont présentes dans le DTO ===
+        if (request.getWarehouseId() != null) {
+            Warehouse warehouse = warehouseRepository.findById(request.getWarehouseId())
+                    .orElseThrow(() -> new CustomException("Warehouse not found with ID: " + request.getWarehouseId()));
+            inventory.setWarehouse(warehouse);
+        }
 
-        Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new CustomException("Product not found with ID: " + request.getProductId()));
+        if (request.getProductId() != null) {
+            Product product = productRepository.findById(request.getProductId())
+                    .orElseThrow(() -> new CustomException("Product not found with ID: " + request.getProductId()));
+            inventory.setProduct(product);
+        }
 
-        inventoryMapper.updateEntityFromDto(request, inventory, warehouse, product);
+        // === Mise à jour des autres champs simples via MapStruct ===
+        inventoryMapper.updateEntityFromDto(request, inventory);
+
         return inventoryMapper.toResponse(inventoryRepository.save(inventory));
     }
 
