@@ -86,6 +86,13 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/{sku}/blocProduct")
+    public ResponseEntity<ProductResponse> desactiverProductBySku(@PathVariable @Valid String sku){
+        System.out.println("Desactivation du produit avec le SKU: " + sku);
+        ProductResponse response=productService.desactiverProductBySku(sku);
+        return ResponseEntity.ok(response);
+    }
+
     // Réactiver
     @PatchMapping("/{id}/activate")
     public ResponseEntity<ProductResponse> activateProduct(@PathVariable Long id) {

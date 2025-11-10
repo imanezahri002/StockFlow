@@ -13,7 +13,7 @@ public class InventoryResponse {
     private Long id;
 
     private Long warehouseId;
-    private String warehouseName; // pour affichage lisible
+    private String warehouseName;
 
     private Long productId;
     private String productName;
