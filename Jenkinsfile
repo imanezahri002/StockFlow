@@ -64,7 +64,8 @@ pipeline {
 
     stage('Package') {
       steps {
-        sh "${MVN_CMD} -B -DskipTests=true package"
+        sh "./mvnw -B -DskipTests=true clean package"
+
       }
     }
   }
