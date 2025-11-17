@@ -52,8 +52,8 @@ pipeline {
             sh """
               ./mvnw sonar:sonar \
                 -Dsonar.projectKey=smartSupply \
-                -Dsonar.host.url=$SONAR_HOST_URL \
-                -Dsonar.token=$SONAR_AUTH_TOKEN
+                -Dsonar.host.url=http://localhost:9000 \
+                -Dsonar.token=squ_0d1dc894e83a4919dc02974e65ee5e051c60c9ea
             """
           }
         }

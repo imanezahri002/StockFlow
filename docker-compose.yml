@@ -5,17 +5,24 @@ services:
     image: jenkins/jenkins:lts
     container_name: jenkins
     user: root
-
     ports:
       - "8082:8080"
       - "50000:50000"
-
     volumes:
       - jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock  # Permet à Jenkins d'utiliser Docker
-      - /usr/bin/docker:/usr/bin/docker            # Docker CLI dans Jenkins
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker
+    restart: unless-stopped
 
+  sonarqube:
+    image: sonarqube:lts
+    container_name: sonarqube
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true  # option pratique si tu as peu de RAM
     restart: unless-stopped
 
 volumes:
   jenkins_home:
+  sonarqube_data:
