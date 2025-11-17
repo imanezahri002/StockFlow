@@ -49,7 +49,12 @@ pipeline {
       steps {
         script {
           withSonarQubeEnv('smartSupply') {
-              sh "./mvnw sonar:sonar"
+            sh """
+              ./mvnw sonar:sonar \
+                -Dsonar.projectKey=smartSupply \
+                -Dsonar.host.url=http://sonarqube:9000 \
+                -Dsonar.token=squ_0d1dc894e83a4919dc02974e65ee5e051c60c9ea
+            """
           }
         }
       }
