@@ -24,25 +24,25 @@ pipeline {
       steps {
         checkout scm
         // Windows diagnostics only
-        bat 'dir'
+        sh 'dir'
       }
     }
 
     stage('Build (compile)') {
       steps {
-        bat "${MVN_CMD} -B -DskipTests=true clean package"
+        sh "${MVN_CMD} -B -DskipTests=true clean package"
       }
     }
 
     stage('Unit Tests') {
       steps {
-        bat "${MVN_CMD} -B test"
+        sh "${MVN_CMD} -B test"
       }
     }
 
     stage('JaCoCo Report') {
       steps {
-        bat "${MVN_CMD} -B jacoco:report"
+        sh "${MVN_CMD} -B jacoco:report"
       }
     }
 
@@ -50,7 +50,7 @@ pipeline {
       steps {
         script {
           withSonarQubeEnv('smartSupply') {
-            bat """
+            sh """
               ${MVN_CMD} sonar:sonar ^
                 -Dsonar.projectKey=smartSupply ^
                 -Dsonar.host.url=%SONAR_HOST_URL% ^
@@ -64,7 +64,7 @@ pipeline {
 
     stage('Package') {
       steps {
-        bat "${MVN_CMD} -B -DskipTests=true package"
+        sh "${MVN_CMD} -B -DskipTests=true package"
       }
     }
   }
