@@ -1,13 +1,12 @@
 pipeline {
   agent any
+
   tools {
-      // Hna fin katgol l Jenkins ykhdem b JDK-17
-      jdk 'JDK-17' // <-- Smiya li derti f Global Tool Configuration
-      maven 'maven' // Mzyan t7aded tal version d Maven
+    jdk 'JDK-17'
+    maven 'maven'
   }
 
   environment {
-    MVN_CMD = "mvnw.cmd"
     MAVEN_OPTS = "-Xmx1g"
   }
 
@@ -23,26 +22,26 @@ pipeline {
     stage('Checkout') {
       steps {
         checkout scm
-        // Windows diagnostics only
-        sh 'dir'
+        sh 'ls -la'
+        sh 'chmod +x mvnw'
       }
     }
 
     stage('Build (compile)') {
       steps {
-        sh "${MVN_CMD} -B -DskipTests=true clean package"
+        sh "./mvnw -B -DskipTests=true clean compile"
       }
     }
 
     stage('Unit Tests') {
       steps {
-        sh "${MVN_CMD} -B test"
+        sh "./mvnw -B test"
       }
     }
 
     stage('JaCoCo Report') {
       steps {
-        sh "${MVN_CMD} -B jacoco:report"
+        sh "./mvnw -B jacoco:report"
       }
     }
 
@@ -51,29 +50,27 @@ pipeline {
         script {
           withSonarQubeEnv('smartSupply') {
             sh """
-              ${MVN_CMD} sonar:sonar ^
-                -Dsonar.projectKey=smartSupply ^
-                -Dsonar.host.url=%SONAR_HOST_URL% ^
-                -Dsonar.token=%SONAR_AUTH_TOKEN%
+              ./mvnw sonar:sonar \
+                -Dsonar.projectKey=smartSupply \
+                -Dsonar.host.url=$SONAR_HOST_URL \
+                -Dsonar.token=$SONAR_AUTH_TOKEN
             """
           }
         }
       }
     }
 
-
     stage('Package') {
       steps {
-        sh "./mvnw -B -DskipTests=true clean package"
-
+        sh "./mvnw -B -DskipTests=true package"
       }
     }
   }
 
   post {
     always {
-      junit allowEmptyResults: true, testResults: 'target/surefire-reports/.xml'
-      archiveArtifacts artifacts: 'target/.jar, target/site/jacoco/**', allowEmptyArchive: true
+      junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
+      archiveArtifacts artifacts: 'target/*.jar, target/site/jacoco/**', allowEmptyArchive: true
       cleanWs()
     }
 
