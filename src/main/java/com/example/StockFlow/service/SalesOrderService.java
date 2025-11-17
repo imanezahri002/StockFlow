@@ -1,3 +1,4 @@
+// java
 package com.example.StockFlow.service;
 
 import com.example.StockFlow.dto.request.SalesOrderRequest;
@@ -31,24 +32,24 @@ public class SalesOrderService {
 
     @Transactional
     public SalesOrderResponse createSalesOrder(SalesOrderRequest request, String token) {
-        // 1️⃣ Récupérer l'utilisateur connecté
+        //  Récupérer l'utilisateur connecté
         var userResponse = authService.getCurrentUser(token).getUser();
         User user = userRepository.findById(userResponse.getId())
                 .orElseThrow(() -> new CustomException("Utilisateur introuvable"));
 
-        // 2️⃣ Vérifier le rôle client
+        //  Vérifier le rôle client
         if (!user.getRole().name().equalsIgnoreCase("CLIENT")) {
             throw new CustomException("Seuls les clients peuvent créer une commande !");
         }
 
-        // 3️⃣ Créer la commande
+        //  Créer la commande
         SalesOrder order = SalesOrder.builder()
                 .user(user)
                 .status(OrderStatus.CREATED)
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        // 4️⃣ Créer les lignes de commande
+        //  Créer les lignes de commande
         List<SalesOrderLine> lines = request.getOrderLines().stream().map(lineRequest -> {
             Product product = productRepository.findById(lineRequest.getProductId())
                     .orElseThrow(() -> new CustomException("Produit non trouvé"));
@@ -68,64 +69,82 @@ public class SalesOrderService {
 
         order.setOrderLines(lines);
 
-        // 5️⃣ Vérifier et réserver le stock
+        //  Vérifier et réserver le stock
         boolean allReserved = reserveStock(order);
 
         if (allReserved) {
             order.setStatus(OrderStatus.RESERVED);
         } else {
+            // la commande reste en CREATED
             order.setStatus(OrderStatus.CREATED);
-            throw new CustomException("Stock insuffisant pour un ou plusieurs produits.");
+
         }
 
-        // 6️⃣ Sauvegarder la commande
+        //  Sauvegarder la commande
         salesOrderRepository.save(order);
 
-        // 7️⃣ Retourner la réponse
+        //  Retourner la réponse
         return salesOrderMapper.toResponse(order);
     }
 
-    /**
-     * Réserve le stock dans les entrepôts et crée les mouvements OUTBOUND.
-     */
+
     private boolean reserveStock(SalesOrder order) {
+        boolean allReserved = true;
+
         for (SalesOrderLine line : order.getOrderLines()) {
             int quantityToReserve = line.getQuantity();
             List<Warehouse> warehouses = warehouseRepository.findAll();
 
+            Inventory fallbackInventory = null; // inventaire où mettre qtyReserved si besoin
+
             for (Warehouse warehouse : warehouses) {
                 Optional<Inventory> optionalInventory = inventoryRepository.findByWarehouseAndProduct(warehouse, line.getProduct());
-                if (optionalInventory.isEmpty()) continue;
+                if (optionalInventory.isEmpty()) {
+                    continue;
+                }
 
                 Inventory inventory = optionalInventory.get();
-                int available = inventory.getQtyOnHand();
+                // garder une référence pour fallback même si qtyOnHand == 0
+                if (fallbackInventory == null) {
+                    fallbackInventory = inventory;
+                }
 
+                int available = inventory.getQtyOnHand();
                 if (available <= 0) continue;
 
-                // Calcul de la quantité à réserver
                 int reservedQty = Math.min(available, quantityToReserve);
 
-                // 🧮 Mise à jour du stock
+                // mise à jour du stock physique
                 inventory.setQtyOnHand(available - reservedQty);
                 inventoryRepository.save(inventory);
 
-                // 🔹 Créer un mouvement OUTBOUND
+                // créer mouvement OUTBOUND pour la quantité réellement réservée physiquement
                 String reference = "Order-" + (order.getId() != null ? order.getId() : "temp");
                 String desc = "Réservation du produit '" + line.getProduct().getName() +
                         "' depuis l'entrepôt '" + warehouse.getName() + "'";
                 inventoryMovementService.createOutboundMovement(inventory, reservedQty, reference, desc);
 
-                // Mise à jour de la quantité restante à réserver
                 quantityToReserve -= reservedQty;
 
-                if (quantityToReserve == 0) break; // produit complètement réservé
+                if (quantityToReserve == 0) break; // produit complètement réservé physiquement
             }
 
             // Si après tous les entrepôts, la quantité reste insuffisante
             if (quantityToReserve > 0) {
-                return false;
+                allReserved = false;
+                line.setBackorder(true);
+
+                // placer la quantité restante dans qtyReserved d'un inventaire ayant le produit
+                if (fallbackInventory != null) {
+                    int currentReserved = fallbackInventory.getQtyReserved() != null ? fallbackInventory.getQtyReserved() : 0;
+                    fallbackInventory.setQtyReserved(currentReserved + quantityToReserve);
+                    inventoryRepository.save(fallbackInventory);
+                } else {
+                    // Aucun inventaire trouvé pour ce produit : lancer une exception explicite
+                    throw new CustomException("Aucun inventaire trouvé pour réserver la quantité restante du produit: " + line.getProduct().getName());
+                }
             }
         }
-        return true;
+        return allReserved;
     }
 }

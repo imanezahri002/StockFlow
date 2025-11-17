@@ -16,6 +16,7 @@ public interface SalesOrderMapper {
     @Mapping(target = "user", expression = "java(user)")
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "backorder", ignore = true)
     @Mapping(target = "orderLines", ignore = true) // sera ajoutée dans le service après
     SalesOrder toEntity(SalesOrderRequest request, User user);
 

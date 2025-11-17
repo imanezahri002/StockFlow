@@ -14,5 +14,6 @@ public class SalesOrderResponse {
     private Long userId;
     private String status;
     private LocalDateTime createdAt;
+    private Boolean backorder;
     private List<SalesOrderLineResponse> orderLines;
 }

@@ -26,6 +26,8 @@ public class SalesOrder {
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
+    private boolean backorder;
+
     private LocalDateTime createdAt;
     private LocalDateTime reservedAt;
     private LocalDateTime shippedAt;

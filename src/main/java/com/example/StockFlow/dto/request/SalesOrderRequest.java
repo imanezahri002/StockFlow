@@ -6,5 +6,6 @@ import java.util.List;
 
 @Data
 public class SalesOrderRequest {
+    private boolean backorder;
     private List<SalesOrderLineRequest>  orderLines;
 }

@@ -35,24 +35,24 @@ public class PurchaseOrderService {
 
     @Transactional
     public PurchaseOrderResponse createOrder(PurchaseOrderRequest request, String token) {
-        // 🔹 1. Récupérer l’utilisateur courant
+        // Récupérer l’utilisateur courant
         UserResponse userResponse = authService.getCurrentUser(token).getUser();
 
-        // 🔹 2. Récupérer le manager
+        // Récupérer le manager
         Manager manager = managerRepository.findById(userResponse.getId())
                 .orElseThrow(() -> new CustomException("Manager introuvable"));
 
-        // 🔹 3. Récupérer le fournisseur
+        // Récupérer le fournisseur
         Supplier supplier = supplierRepository.findById(request.getSupplierId())
                 .orElseThrow(() -> new RuntimeException("Fournisseur non trouvé"));
 
-        // 🔹 4. Créer la commande (sans lignes)
+        // Créer la commande (sans lignes)
         PurchaseOrder order = purchaseOrderMapper.toEntity(request, supplier, manager);
         order.setStatus(PurchaseOrderStatus.CREATED);
         order.setCreatedAt(LocalDateTime.now());
         order.setWarehouseId(request.getWarehouseId());
 
-        // 🔹 5. Mapper les lignes avec calculs
+        // Mapper les lignes avec calculs
         var lines = request.getOrderLines().stream().map(lineRequest -> {
             var product = productRepository.findById(lineRequest.getProductId())
                     .orElseThrow(() -> new RuntimeException("Produit non trouvé"));
@@ -60,7 +60,7 @@ public class PurchaseOrderService {
             var line = purchaseOrderLineMapper.toEntity(lineRequest, product);
             line.setPurchaseOrder(order);
 
-            // 💡 Calculs déplacés ici
+            // Calculs déplacés ici
             BigDecimal unitPrice = product.getOriginalPrice() != null ? product.getOriginalPrice() : BigDecimal.ZERO;
             BigDecimal totalPrice = unitPrice.multiply(BigDecimal.valueOf(lineRequest.getQuantity()));
 
@@ -72,39 +72,39 @@ public class PurchaseOrderService {
             return line;
         }).toList();
 
-        // 🔹 6. Associer les lignes à la commande
+        // Associer les lignes à la commande
         order.setOrderLines(lines);
 
-        // 🔹 7. Sauvegarder
+        // Sauvegarder
         purchaseOrderRepository.save(order);
 
-        // 🔹 8. Retourner la réponse
+        // Retourner la réponse
         return purchaseOrderMapper.toResponse(order);
     }
     @Transactional
     public PurchaseOrderResponse approvePurchaseOrder(Long purchaseOrderId) {
-        // 1️⃣ Récupérer la commande
+        // Récupérer la commande
         PurchaseOrder purchaseOrder = purchaseOrderRepository.findById(purchaseOrderId)
                 .orElseThrow(() -> new RuntimeException("Purchase order not found"));
 
-        // 2️⃣ Vérifier si déjà approuvée
+        // Vérifier si déjà approuvée
         if (purchaseOrder.getStatus() == PurchaseOrderStatus.APPROVED) {
             throw new RuntimeException("Purchase order already approved");
         }
 
-        // 3️⃣ Récupérer le warehouse concerné
+        // Récupérer le warehouse concerné
         Long warehouseId = purchaseOrder.getWarehouseId();
         Warehouse warehouse = warehouseRepository.findById(warehouseId)
                 .orElseThrow(() -> new RuntimeException("Warehouse not found"));
 
-        // 4️⃣ Récupérer les lignes de commande (produits commandés)
+        // Récupérer les lignes de commande (produits commandés)
         List<PurchaseOrderLine> lines = purchaseOrder.getOrderLines();
 
         for (PurchaseOrderLine line : lines) {
             Product product = line.getProduct();
             Integer qtyReceived = line.getQuantity();
 
-            // 5️⃣ Vérifier si un inventaire existe déjà pour ce produit dans ce warehouse
+            // Vérifier si un inventaire existe déjà pour ce produit dans ce warehouse
             Inventory inventory = inventoryRepository
                     .findByWarehouseAndProduct(warehouse, product)
                     .orElseGet(() -> {
@@ -119,11 +119,11 @@ public class PurchaseOrderService {
                         return inventoryRepository.save(newInv);
                     });
 
-            // 6️⃣ Ajouter la quantité reçue
+            // Ajouter la quantité reçue
             inventory.setQtyOnHand(inventory.getQtyOnHand() + qtyReceived);
             inventoryRepository.save(inventory);
 
-            // 7️⃣ Enregistrer un mouvement INBOUND
+            // Enregistrer un mouvement INBOUND
             InventoryMovement movement = InventoryMovement.builder()
                     .inventory(inventory)
                     .type(MovementType.INBOUND)
@@ -136,7 +136,7 @@ public class PurchaseOrderService {
             inventoryMovementRepository.save(movement);
         }
 
-        // 8️⃣ Changer le statut de la commande
+        // Changer le statut de la commande
         purchaseOrder.setStatus(PurchaseOrderStatus.APPROVED);
         purchaseOrderRepository.save(purchaseOrder);
         return purchaseOrderMapper.toResponse(purchaseOrder);
