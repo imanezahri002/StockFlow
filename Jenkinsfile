@@ -53,7 +53,7 @@ pipeline {
               ./mvnw sonar:sonar \
                 -Dsonar.projectKey=smartSupply \
                 -Dsonar.host.url=http://sonarqube:9000 \
-                -Dsonar.token=squ_0d1dc894e83a4919dc02974e65ee5e051c60c9ea
+                -Dsonar.token=squ_0a3056dc2c164a073d2f219b7f12264214eb4f3d
             """
           }
         }
