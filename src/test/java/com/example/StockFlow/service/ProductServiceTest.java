@@ -114,7 +114,8 @@ class ProductServiceTest {
     @Test
     void getAllProducts_and_filters() {
         Product a = new Product(); Product b = new Product();
-        ProductResponse ra = new ProductResponse(); ProductResponse rb = new ProductResponse();
+        ProductResponse ra = new ProductResponse();
+        ProductResponse rb = new ProductResponse();
 
         when(productRepository.findAll()).thenReturn(List.of(a, b));
         when(productMapper.toResponseList(List.of(a, b))).thenReturn(List.of(ra, rb));

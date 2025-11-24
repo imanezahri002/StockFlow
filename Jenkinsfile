@@ -19,14 +19,6 @@ pipeline {
 
   stages {
 
-    stage('Checkout') {
-      steps {
-        checkout scm
-        sh 'ls -la'
-        sh 'chmod +x mvnw'
-      }
-    }
-
     stage('Build (compile)') {
       steps {
         sh "./mvnw -B -DskipTests=true clean compile"
