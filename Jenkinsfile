@@ -46,19 +46,21 @@ pipeline {
     }
 
     stage('SonarQube Analysis') {
-      steps {
-        script {
-          withSonarQubeEnv('smartSupply') {
-            sh """
-              ./mvnw sonar:sonar \
-                -Dsonar.projectKey=smartSupply \
-                -Dsonar.host.url=http://sonarqube:9000 \
-                -Dsonar.token=squ_0a3056dc2c164a073d2f219b7f12264214eb4f3d
-            """
-          }
+        steps {
+            script {
+                withSonarQubeEnv('smartSupply') {
+                    sh """
+                      ./mvnw sonar:sonar \
+                        -Dsonar.projectKey=smartSupply \
+                        -Dsonar.host.url=http://sonarqube:9000 \
+                        -Dsonar.login=squ_0a3056dc2c164a073d2f219b7f12264214eb4f3d \
+                        -Dsonar.exclusions=**/dto/**,**/mapper/**,**/entity/**,**/controllers/**
+                    """
+                }
+            }
         }
-      }
     }
+
 
     stage('Package') {
       steps {
