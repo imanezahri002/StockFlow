@@ -53,6 +53,11 @@ public class AuthService {
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new CustomException("Utilisateur non trouvé"));
+
+        if (!checkPassword(request.getPassword(), user.getPassword())) {
+            throw new CustomException("Mot de passe incorrect");
+        }
+
         String token = UUID.randomUUID().toString();
         sessions.put(token, user);
 
@@ -62,6 +67,7 @@ public class AuthService {
                 .user(userMapper.toResponse(user))
                 .build();
     }
+
 
     private String encodePassword(String password) {
         try {
@@ -76,7 +82,7 @@ public class AuthService {
     private boolean checkPassword(String rawPassword, String encodedPassword) {
         return encodePassword(rawPassword).equals(encodedPassword);
     }
-//logique du user courant
+    //logique du user courant
     // --- Récupérer l'utilisateur courant ---
     public AuthResponse getCurrentUser(String token) {
         User user = sessions.get(token);
