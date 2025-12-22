@@ -4,6 +4,7 @@ import com.example.StockFlow.dto.request.LoginRequest;
 import com.example.StockFlow.dto.request.RegisterRequest;
 import com.example.StockFlow.dto.response.AuthResponse;
 import com.example.StockFlow.dto.response.UserResponse;
+import com.example.StockFlow.entity.RefreshToken;
 import com.example.StockFlow.entity.User;
 import com.example.StockFlow.entity.enums.Role;
 import com.example.StockFlow.jwt.JwtService;
@@ -23,6 +24,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
     // ================= REGISTER =================
     public AuthResponse register(RegisterRequest request) {
@@ -46,6 +48,7 @@ public class AuthService {
                 .actif(true)
                 .build();
 
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
         // 4️⃣ Sauvegarder
         userRepository.save(user);
 
@@ -67,6 +70,7 @@ public class AuthService {
         return AuthResponse.builder()
                 .message("Inscription réussie")
                 .token(token)
+                .refreshToken(refreshToken.getToken())
                 .user(userResponse)
                 .build();
     }
@@ -89,6 +93,9 @@ public class AuthService {
         // 3️⃣ Générer JWT
         String token = jwtService.generateToken(user);
 
+        // 4️⃣ Générer refresh token
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+
         // 4️⃣ Mapper User → UserResponse
         UserResponse userResponse = UserResponse.builder()
                 .id(user.getId())
@@ -101,6 +108,7 @@ public class AuthService {
         return AuthResponse.builder()
                 .message("Connexion réussie")
                 .token(token)
+                .refreshToken(refreshToken.getToken())
                 .user(userResponse)
                 .build();
     }

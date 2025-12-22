@@ -5,6 +5,7 @@ import com.example.StockFlow.dto.response.SalesOrderResponse;
 import com.example.StockFlow.service.SalesOrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,6 +17,7 @@ public class SalesOrderController {
 
     // Créer une nouvelle commande
     @PostMapping
+    @PreAuthorize("hasRole('CLIENT')")
     public ResponseEntity<SalesOrderResponse> createSalesOrder(
             @RequestBody SalesOrderRequest request
     ) {
