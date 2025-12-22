@@ -3,101 +3,151 @@ package com.example.StockFlow.service;
 import com.example.StockFlow.dto.request.LoginRequest;
 import com.example.StockFlow.dto.request.RegisterRequest;
 import com.example.StockFlow.dto.response.AuthResponse;
+import com.example.StockFlow.dto.response.UserResponse;
 import com.example.StockFlow.entity.User;
-import com.example.StockFlow.exception.CustomException;
-import com.example.StockFlow.mapper.UserMapper;
+import com.example.StockFlow.entity.enums.Role;
+import com.example.StockFlow.jwt.JwtService;
 import com.example.StockFlow.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
+    private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
-    private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-
-    // Map pour stocker les sessions (token → user)
-    private final Map<String, User> sessions = new ConcurrentHashMap<>();
-
-    // --- Inscription ---
+    // ================= REGISTER =================
     public AuthResponse register(RegisterRequest request) {
+
+        // 1️⃣ Vérifier email
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new CustomException("Email déjà utilisé");
+            throw new RuntimeException("Email déjà utilisé");
         }
 
-        User user = userMapper.toEntity(request);
-        user.setPassword(encodePassword(request.getPassword()));
+        // 2️⃣ Valider le rôle envoyé
+        Role role = validateRole(request.getRole());
+
+        // 3️⃣ Créer utilisateur
+        User user = User.builder()
+                .username(request.getUsername())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .tel(request.getTel())
+                .addressse(request.getAddressse())
+                .role(role)
+                .actif(true)
+                .build();
+
+        // 4️⃣ Sauvegarder
         userRepository.save(user);
 
-        // Générer un token pour session immédiate si souhaité
-        String token = UUID.randomUUID().toString();
-        sessions.put(token, user);
+        // 5️⃣ Générer JWT
+        String token = jwtService.generateToken(user);
 
+        // 6️⃣ Mapper User → UserResponse
+        UserResponse userResponse = UserResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .tel(user.getTel())
+                .addressse(user.getAddressse())
+                .role(user.getRole().name())
+                .actif(user.getActif())
+                .build();
+
+        // 7️⃣ Retourner réponse
         return AuthResponse.builder()
                 .message("Inscription réussie")
-                .sessionId(token)
-                .user(userMapper.toResponse(user))
+                .token(token)
+                .user(userResponse)
                 .build();
     }
 
-    // --- Connexion ---
+    // ================= LOGIN =================
     public AuthResponse login(LoginRequest request) {
+
+        // 1️⃣ Authentification Spring Security
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getEmail(),
+                        request.getPassword()
+                )
+        );
+
+        // 2️⃣ Récupérer utilisateur
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new CustomException("Utilisateur non trouvé"));
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
-        if (!checkPassword(request.getPassword(), user.getPassword())) {
-            throw new CustomException("Mot de passe incorrect");
-        }
+        // 3️⃣ Générer JWT
+        String token = jwtService.generateToken(user);
 
-        String token = UUID.randomUUID().toString();
-        sessions.put(token, user);
+        // 4️⃣ Mapper User → UserResponse
+        UserResponse userResponse = UserResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .build();
 
+        // 5️⃣ Retourner réponse
         return AuthResponse.builder()
                 .message("Connexion réussie")
-                .sessionId(token)
-                .user(userMapper.toResponse(user))
+                .token(token)
+                .user(userResponse)
                 .build();
     }
+    // ================= GET CURRENT USER =================
+    public AuthResponse getCurrentUser() {
+        User user = getAuthenticatedUser(); // utilise la méthode interne
 
+        UserResponse userResponse = mapToUserResponse(user);
 
-    private String encodePassword(String password) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] hash = md.digest(password.getBytes());
-            return Base64.getEncoder().encodeToString(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Erreur lors de l'encodage du mot de passe", e);
-        }
-    }
-
-    private boolean checkPassword(String rawPassword, String encodedPassword) {
-        return encodePassword(rawPassword).equals(encodedPassword);
-    }
-    //logique du user courant
-    // --- Récupérer l'utilisateur courant ---
-    public AuthResponse getCurrentUser(String token) {
-        User user = sessions.get(token);
-        if (user == null) {
-            throw new CustomException("Token invalide ou expiré");
-        }
         return AuthResponse.builder()
-                .message("Utilisateur récupéré")
-                .sessionId(token)
-                .user(userMapper.toResponse(user))
+                .message("Utilisateur courant")
+                .user(userResponse)
                 .build();
     }
 
-    // --- Déconnexion ---
-    public void logout(String token) {
-        sessions.remove(token);
+    // ---------------- Helper pour récupérer l'utilisateur connecté ----------------
+    public User getAuthenticatedUser() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (principal instanceof User user) {
+            return user;
+        }
+
+        throw new RuntimeException("Utilisateur non authentifié");
+    }
+
+    // ---------------- Helper pour mapper User → UserResponse ----------------
+    private UserResponse mapToUserResponse(User user) {
+        return UserResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .build();
+    }
+
+    // ================= ROLE VALIDATION =================
+    private Role validateRole(Role role) {
+
+        if (role == null) {
+            throw new RuntimeException("Le rôle est obligatoire");
+        }
+
+        if (role == Role.ADMIN) {
+            throw new RuntimeException("Création ADMIN interdite");
+        }
+
+        return role;
     }
 }

@@ -31,25 +31,23 @@ public class SalesOrderService {
     private final SalesOrderMapper salesOrderMapper;
 
     @Transactional
-    public SalesOrderResponse createSalesOrder(SalesOrderRequest request, String token) {
-        //  Récupérer l'utilisateur connecté
-        var userResponse = authService.getCurrentUser(token).getUser();
-        User user = userRepository.findById(userResponse.getId())
-                .orElseThrow(() -> new CustomException("Utilisateur introuvable"));
+    public SalesOrderResponse createSalesOrder(SalesOrderRequest request) {
+        // 1️⃣ Récupérer l'utilisateur connecté via AuthService
+        User user = authService.getAuthenticatedUser();
 
-        //  Vérifier le rôle client
+        // 2️⃣ Vérifier le rôle client
         if (!user.getRole().name().equalsIgnoreCase("CLIENT")) {
             throw new CustomException("Seuls les clients peuvent créer une commande !");
         }
 
-        //  Créer la commande
+        // 3️⃣ Créer la commande
         SalesOrder order = SalesOrder.builder()
                 .user(user)
                 .status(OrderStatus.CREATED)
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        //  Créer les lignes de commande
+        // 4️⃣ Créer les lignes de commande
         List<SalesOrderLine> lines = request.getOrderLines().stream().map(lineRequest -> {
             Product product = productRepository.findById(lineRequest.getProductId())
                     .orElseThrow(() -> new CustomException("Produit non trouvé"));
@@ -69,21 +67,19 @@ public class SalesOrderService {
 
         order.setOrderLines(lines);
 
-        //  Vérifier et réserver le stock
+        // 5️⃣ Vérifier et réserver le stock
         boolean allReserved = reserveStock(order);
 
         if (allReserved) {
             order.setStatus(OrderStatus.RESERVED);
         } else {
-            // la commande reste en CREATED
             order.setStatus(OrderStatus.CREATED);
-
         }
 
-        //  Sauvegarder la commande
+        // 6️⃣ Sauvegarder la commande
         salesOrderRepository.save(order);
 
-        //  Retourner la réponse
+        // 7️⃣ Retourner la réponse
         return salesOrderMapper.toResponse(order);
     }
 

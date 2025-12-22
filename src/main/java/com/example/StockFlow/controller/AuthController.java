@@ -29,14 +29,8 @@ public class AuthController {
 
     // --- Récupérer l'utilisateur courant ---
     @GetMapping("/me")
-    public ResponseEntity<AuthResponse> me(@RequestHeader("Authorization") String token) {
-        return ResponseEntity.ok(authService.getCurrentUser(token));
+    public ResponseEntity<AuthResponse> me() {
+        return ResponseEntity.ok(authService.getCurrentUser());
     }
 
-    // --- Déconnexion ---
-    @PostMapping("/logout")
-    public ResponseEntity<String> logout(@RequestHeader("Authorization") String token) {
-        authService.logout(token);
-        return ResponseEntity.ok("Déconnecté avec succès");
-    }
 }

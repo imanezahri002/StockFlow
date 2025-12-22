@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class AuthResponse {
     private String message;
-    private String sessionId;
+    private String token;
     private UserResponse user;
 }

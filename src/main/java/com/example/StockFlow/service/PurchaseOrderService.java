@@ -36,10 +36,11 @@ public class PurchaseOrderService {
     @Transactional
     public PurchaseOrderResponse createOrder(PurchaseOrderRequest request, String token) {
         // Récupérer l’utilisateur courant
-        UserResponse userResponse = authService.getCurrentUser(token).getUser();
+
+        User user = authService.getAuthenticatedUser();
 
         // Récupérer le manager
-        Manager manager = managerRepository.findById(userResponse.getId())
+        Manager manager = managerRepository.findById(user.getId())
                 .orElseThrow(() -> new CustomException("Manager introuvable"));
 
         // Récupérer le fournisseur

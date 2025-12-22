@@ -17,10 +17,9 @@ public class SalesOrderController {
     // Créer une nouvelle commande
     @PostMapping
     public ResponseEntity<SalesOrderResponse> createSalesOrder(
-            @RequestBody SalesOrderRequest request,
-            @RequestHeader("Authorization") String token
+            @RequestBody SalesOrderRequest request
     ) {
-        SalesOrderResponse response = salesOrderService.createSalesOrder(request, token);
+        SalesOrderResponse response = salesOrderService.createSalesOrder(request);
         return ResponseEntity.ok(response);
     }
 }
