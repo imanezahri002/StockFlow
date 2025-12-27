@@ -48,9 +48,10 @@ public class AuthService {
                 .actif(true)
                 .build();
 
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
         // 4️⃣ Sauvegarder
         userRepository.save(user);
+
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
         // 5️⃣ Générer JWT
         String token = jwtService.generateToken(user);

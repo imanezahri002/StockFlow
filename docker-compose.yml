@@ -1,6 +1,9 @@
 version: '3.8'
 
 services:
+  # =====================
+  # JENKINS
+  # =====================
   jenkins:
     image: jenkins/jenkins:lts
     container_name: jenkins
@@ -13,7 +16,12 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /usr/bin/docker:/usr/bin/docker
     restart: unless-stopped
+    networks:
+      - my-network
 
+  # =====================
+  # SONARQUBE
+  # =====================
   sonarqube:
     image: sonarqube:lts
     container_name: sonarqube
@@ -26,9 +34,75 @@ services:
       - sonarqube_extensions:/opt/sonarqube/extensions
       - sonarqube_logs:/opt/sonarqube/logs
     restart: unless-stopped
+    networks:
+      - my-network
 
+  # =====================
+  # ELASTICSEARCH
+  # =====================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.22
+    container_name: elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - cluster.name=docker-cluster
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - my-network
+
+  # =====================
+  # KIBANA
+  # =====================
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.22
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - my-network
+
+  # =====================
+  # LOGSTASH
+  # =====================
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.1
+    container_name: logstash
+    volumes:
+      - ./monitoring/logstash:/usr/share/logstash/pipeline
+    ports:
+      - "5000:5000"
+    depends_on:
+      - elasticsearch
+    networks:
+      - my-network
+
+# =====================
+# VOLUMES
+# =====================
 volumes:
   jenkins_home:
   sonarqube_data:
   sonarqube_extensions:
   sonarqube_logs:
+  es_data:
+
+# =====================
+# NETWORK
+# =====================
+networks:
+  my-network:
+    driver: bridge

@@ -5,6 +5,7 @@ import com.example.StockFlow.dto.response.ProductResponse;
 import com.example.StockFlow.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,8 @@ import java.util.List;
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
+
+@Slf4j
 public class ProductController {
 
     private final ProductService productService;
@@ -31,6 +34,9 @@ public class ProductController {
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getProductById(@PathVariable Long id) {
         ProductResponse response = productService.getProductById(id);
+        log.info("Example  info  message -> Received product ID {}", id);
+        log.debug("Example debug message -> Received product ID {}", id);
+        log.error("Example error message -> not found product ID {}", id);
         return ResponseEntity.ok(response);
     }
 
