@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,30 +19,34 @@ public class SupplierController {
     @Autowired
     private SupplierService supplierService;
 
-    // Récupérer tous les fournisseurs
+    // READ - ADMIN and WM
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'WAREHOUSE_MANAGER')")
     public ResponseEntity<List<SupplierResponse>> getAllSuppliers() {
         List<SupplierResponse> suppliers = supplierService.getAllSuppliers();
         return ResponseEntity.ok(suppliers);
     }
 
-    // Récupérer un fournisseur par son ID
+    // READ - ADMIN and WM
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'WAREHOUSE_MANAGER')")
     public ResponseEntity<SupplierResponse> getSupplierById(@PathVariable Long id) {
         return supplierService.getSupplierById(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // Créer un nouveau fournisseur
+    // CREATE - ADMIN only
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SupplierResponse> createSupplier(@Valid @RequestBody SupplierRequest supplierRequest) {
         SupplierResponse createdSupplier = supplierService.createSupplier(supplierRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdSupplier);
     }
 
-    // Mettre à jour un fournisseur existant
+    // UPDATE - ADMIN only
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SupplierResponse> updateSupplier(
             @PathVariable Long id,
             @Valid @RequestBody SupplierRequest supplierRequest) {
@@ -49,8 +54,9 @@ public class SupplierController {
         return ResponseEntity.ok(updatedSupplier);
     }
 
-    // Supprimer un fournisseur
+    // DELETE - ADMIN only
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteSupplier(@PathVariable Long id) {
         supplierService.deleteSupplier(id);
         return ResponseEntity.noContent().build();

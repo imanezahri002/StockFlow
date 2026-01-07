@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Appender console pour les tests -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Niveau de log pour les tests -->
+    <root level="WARN">
+        <appender-ref ref="CONSOLE" />
+    </root>
+
+    <!-- Logs spécifiques -->
+    <logger name="com.example.StockFlow" level="INFO" />
+    <logger name="org.springframework.security" level="WARN" />
+    <logger name="org.hibernate.SQL" level="WARN" />
+</configuration>
+

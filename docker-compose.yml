@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.9'
 
 services:
   # =====================
@@ -44,19 +44,14 @@ services:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.22
     container_name: elasticsearch
     environment:
-      - node.name=elasticsearch
-      - cluster.name=docker-cluster
       - discovery.type=single-node
-      - bootstrap.memory_lock=true
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     volumes:
       - es_data:/usr/share/elasticsearch/data
     ports:
       - "9200:9200"
+    restart: unless-stopped
     networks:
       - my-network
 
@@ -72,6 +67,7 @@ services:
       - "5601:5601"
     depends_on:
       - elasticsearch
+    restart: unless-stopped
     networks:
       - my-network
 
@@ -79,14 +75,18 @@ services:
   # LOGSTASH
   # =====================
   logstash:
-    image: docker.elastic.co/logstash/logstash:8.11.1
+    image: docker.elastic.co/logstash/logstash:7.17.22
     container_name: logstash
+    environment:
+      - xpack.monitoring.enabled=false
     volumes:
       - ./monitoring/logstash:/usr/share/logstash/pipeline
     ports:
       - "5000:5000"
+      - "9600:9600"   # pour monitoring Logstash
     depends_on:
       - elasticsearch
+    restart: unless-stopped
     networks:
       - my-network
 

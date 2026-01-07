@@ -1,43 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-    <!-- ===================== -->
     <!-- Console Appender -->
-    <!-- ===================== -->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>
-                %d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg
-                traceId=%X{traceId} spanId=%X{spanId}%n
-            </pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg traceId=%X{traceId} spanId=%X{spanId}%n</pattern>
         </encoder>
     </appender>
 
-    <!-- ===================== -->
     <!-- Logstash Appender -->
-    <!-- ===================== -->
-    <appender name="LOGSTASH"
-              class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-
-        <!-- ⚠️ utiliser le nom du service docker -->
-        <destination>localhost:5000</destination>
-
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <customFields>
-                {
-                "environment": "dev",
-                "application": "StockFlow"
-                }
-            </customFields>
-        </encoder>
+    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <!-- localhost car Spring Boot est sur ta machine -->
+        <destination>127.0.0.1:5000</destination>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
     </appender>
 
-    <!-- ===================== -->
-    <!-- Root Logger -->
-    <!-- ===================== -->
-    <root level="INFO">
-        <appender-ref ref="STDOUT"/>
-        <appender-ref ref="LOGSTASH"/>
+
+    <!-- Root logger -->
+    <root level="info">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="LOGSTASH" />
     </root>
 
 </configuration>

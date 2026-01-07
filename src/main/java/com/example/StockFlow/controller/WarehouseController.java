@@ -5,6 +5,7 @@ import com.example.StockFlow.dto.response.WarehouseResponse;
 import com.example.StockFlow.service.WarehouseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,27 +17,37 @@ public class WarehouseController {
 
     private final WarehouseService warehouseService;
 
+    // CREATE - ADMIN only
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<WarehouseResponse> create(@RequestBody WarehouseRequest request) {
         return ResponseEntity.ok(warehouseService.createWarehouse(request));
     }
 
+    // READ - ADMIN, WM, CLIENT (optionnel)
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'WAREHOUSE_MANAGER', 'CLIENT')")
     public ResponseEntity<List<WarehouseResponse>> getAll() {
         return ResponseEntity.ok(warehouseService.getAllWarehouses());
     }
 
+    // READ - ADMIN, WM, CLIENT (optionnel)
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'WAREHOUSE_MANAGER', 'CLIENT')")
     public ResponseEntity<WarehouseResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(warehouseService.getWarehouseById(id));
     }
 
+    // UPDATE - ADMIN only
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<WarehouseResponse> update(@PathVariable Long id, @RequestBody WarehouseRequest request) {
         return ResponseEntity.ok(warehouseService.updateWarehouse(id, request));
     }
 
+    // DELETE - ADMIN only
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> delete(@PathVariable Long id) {
         warehouseService.deleteWarehouse(id);
         return ResponseEntity.ok("Warehouse deleted successfully");
